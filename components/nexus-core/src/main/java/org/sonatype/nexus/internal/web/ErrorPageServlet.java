@@ -25,6 +25,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.app.SystemStatus;
@@ -98,22 +99,18 @@ public class ErrorPageServlet
     this.webUtils = checkNotNull(webUtils);
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings("unused")
   @Override
   protected void service(final HttpServletRequest request, final HttpServletResponse response)
       throws ServletException, IOException
   {
     webUtils.addNoCacheResponseHeaders(response);
 
-    @SuppressWarnings("unused")
     String servletName = (String) request.getAttribute(ERROR_SERVLET_NAME);
-    @SuppressWarnings("unused")
     String requestUri = (String) request.getAttribute(ERROR_REQUEST_URI);
     Integer errorCode = (Integer) request.getAttribute(ERROR_STATUS_CODE);
     String errorMessage = (String) request.getAttribute(ERROR_MESSAGE);
-    @SuppressWarnings("unused")
     Class<?> causeType = (Class<?>) request.getAttribute(ERROR_EXCEPTION_TYPE);
-    @SuppressWarnings("unused")
     Throwable cause = (Throwable) request.getAttribute(ERROR_EXCEPTION);
 
     // this happens if someone browses directly to the error page
@@ -130,27 +127,26 @@ public class ErrorPageServlet
     // ensure sanity of passed in strings which are used to render html content
     errorMessage = StringEscapeUtils.escapeHtml(errorMessage);
 
-    response.setStatus(errorCode, errorMessage);
-    render(response, errorCode, errorMessage, errorMessage);
+    response.setStatus(errorCode);
+    render(response, errorMessage);
   }
 
   /**
    * Render error page.
    */
   private void render(final HttpServletResponse response,
-                      final int errorCode,
-                      final String errorName,
                       final String errorMessage)
       throws IOException
   {
     SystemStatus status = systemStatus.get();
-    Map<String, Object> dataModel = Maps.newHashMapWithExpectedSize(5);
+    int errorCode = response.getStatus();
+    Map<String, Object> dataModel = Maps.newHashMapWithExpectedSize(7);
     dataModel.put("nexusRoot", BaseUrlHolder.get());
     dataModel.put("nexusVersion", status.getVersion());
     dataModel.put("nexusEdition", status.getEditionShort());
     dataModel.put("urlSuffix", status.getVersion()); // for cache busting
     dataModel.put("errorCode", errorCode);
-    dataModel.put("errorName", errorName);
+    dataModel.put("errorName", Status.fromStatusCode(errorCode).getReasonPhrase());
     dataModel.put("errorDescription", errorMessage);
 
     String html = templateEngine.render(this, "errorPageContentHtml.vm", dataModel);
