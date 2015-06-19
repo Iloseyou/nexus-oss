@@ -98,19 +98,23 @@ public class ErrorPageServlet
     this.webUtils = checkNotNull(webUtils);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   protected void service(final HttpServletRequest request, final HttpServletResponse response)
       throws ServletException, IOException
   {
     webUtils.addNoCacheResponseHeaders(response);
 
+    @SuppressWarnings("unused")
     String servletName = (String) request.getAttribute(ERROR_SERVLET_NAME);
+    @SuppressWarnings("unused")
     String requestUri = (String) request.getAttribute(ERROR_REQUEST_URI);
     Integer errorCode = (Integer) request.getAttribute(ERROR_STATUS_CODE);
     String errorMessage = (String) request.getAttribute(ERROR_MESSAGE);
-    Class causeType = (Class) request.getAttribute(ERROR_EXCEPTION_TYPE);
+    @SuppressWarnings("unused")
+    Class<?> causeType = (Class<?>) request.getAttribute(ERROR_EXCEPTION_TYPE);
+    @SuppressWarnings("unused")
     Throwable cause = (Throwable) request.getAttribute(ERROR_EXCEPTION);
-    String errorName = null;
 
     // this happens if someone browses directly to the error page
     if (errorCode == null) {
@@ -125,15 +129,9 @@ public class ErrorPageServlet
 
     // ensure sanity of passed in strings which are used to render html content
     errorMessage = StringEscapeUtils.escapeHtml(errorMessage);
-    if (errorName != null) {
-      errorName = StringEscapeUtils.escapeHtml(errorName);
-    }
-    else {
-      errorName = "";
-    }
 
-    response.setStatus(errorCode, errorName);
-    render(response, errorCode, errorName, errorMessage);
+    response.setStatus(errorCode, errorMessage);
+    render(response, errorCode, errorMessage, errorMessage);
   }
 
   /**
@@ -160,17 +158,6 @@ public class ErrorPageServlet
     try (PrintWriter out = new PrintWriter(new OutputStreamWriter(response.getOutputStream()))) {
       out.println(html);
     }
-  }
-
-  /**
-   * Returns the message of given throwable, or if message is null will toString throwable.
-   */
-  private static String messageOf(final Throwable cause) {
-    String message = cause.getMessage();
-    if (message == null) {
-      return cause.toString();
-    }
-    return message;
   }
 
   /**
