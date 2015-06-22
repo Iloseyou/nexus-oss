@@ -251,13 +251,14 @@ Ext.define('NX.coreui.controller.Tasks', {
 
   /**
    * @private
-   * (Re)load task store.
+   * (Re)load task type store && reset all cached combo stores.
    */
   onRefresh: function() {
     var me = this,
         list = me.getList();
 
     if (list) {
+      me.getStore('TaskType').load();
       me.getStore('Task').load();
     }
   },
